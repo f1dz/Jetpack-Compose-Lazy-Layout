@@ -24,16 +24,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.iteqno.jetheroes.data.HeroRepository
 import com.iteqno.jetheroes.model.HeroesData
 import com.iteqno.jetheroes.ui.theme.JetHeroesTheme
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.forEach
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun JetHeroesApp(modifier: Modifier = Modifier) {
-    val groupedHeroes = HeroesData.heroes
-        .sortedBy { it.name }
-        .groupBy { it.name[0] }
+fun JetHeroesApp(
+    modifier: Modifier = Modifier,
+    viewModel: HeroesViewModel = viewModel(
+        factory = ViewModelFactory(
+            HeroRepository()
+        )
+    )
+) {
+    val groupedHeroes = viewModel.groupedHeroes.collectAsState()
 
     Box(modifier = modifier) {
         val scope = rememberCoroutineScope()
@@ -45,7 +53,7 @@ fun JetHeroesApp(modifier: Modifier = Modifier) {
             state = listState,
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            groupedHeroes.forEach{ (initial, heroes) ->
+            groupedHeroes.value.forEach { (initial, heroes) ->
                 stickyHeader {
                     CharacterHeader(initial)
                 }
@@ -62,7 +70,7 @@ fun JetHeroesApp(modifier: Modifier = Modifier) {
         AnimatedVisibility(
             visible = showButton,
             enter = fadeIn() + slideInVertically(),
-            exit = fadeOut() + slideOutVertically (),
+            exit = fadeOut() + slideOutVertically(),
             modifier = Modifier
                 .padding(bottom = 30.dp)
                 .align(Alignment.BottomCenter)
@@ -133,7 +141,7 @@ fun ScrollToTopButton(
 fun CharacterHeader(
     char: Char,
     modifier: Modifier = Modifier
-){
+) {
     Surface(
         color = MaterialTheme.colors.primary,
         modifier = modifier
